@@ -1,0 +1,101 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel – Participants</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #004080;
+        }
+        .event-section {
+            background: white;
+            margin: 20px auto;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+            max-width: 800px;
+        }
+        h2 {
+            color: #333;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 8px 14px;
+            background-color: #004080;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #002d5a;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Admin Panel – Registered Participants</h1>
+    <div id="adminDataContainer"></div>
+
+    <script>
+        function loadAllRegistrations() {
+            const container = document.getElementById("adminDataContainer");
+            container.innerHTML = "";
+
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith("registered-")) {
+                    const eventName = key.replace("registered-", "");
+                    const participantsKey = `participants-${eventName}`;
+                    const rawData = localStorage.getItem(participantsKey);
+
+                    let participants = [];
+                    try {
+                        participants = JSON.parse(rawData);
+                    } catch (e) {
+                        participants = [];
+                    }
+
+                    const section = document.createElement("div");
+                    section.classList.add("event-section");
+
+                    section.innerHTML = `
+                        <h2>${eventName} (${participants.length} participants)</h2>
+                        <ul>${participants.map(p => `<li>${p.name} (${p.department}, ${p.rollNo}) - ${p.email}</li>`).join("")}</ul>
+                        <button onclick="exportCSV('${eventName}', ${JSON.stringify(participants).replace(/"/g, '&quot;')})">Export CSV</button>
+                    `;
+                    container.appendChild(section);
+                }
+            });
+        }
+
+        function exportCSV(eventName, participants) {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Name,Department,Roll No,Email\n";
+            participants.forEach(p => {
+                csvContent += `${p.name},${p.department},${p.rollNo},${p.email}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `${eventName}_participants.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        loadAllRegistrations();
+    </script>
+</body>
+</html>
